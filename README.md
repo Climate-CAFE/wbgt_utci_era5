@@ -1,4 +1,4 @@
-# Pipeline for Area-Level Estimation of Wet Bulb Globe Temperature and Universal Thermal Climate Index
+# Area-Level Estimation of Wet Bulb Globe Temperature and Universal Thermal Climate Index Pipeline 
 
 ## Project Overview
 R code is provided for all steps from data download to raster-level summation of hourly wet bulb globe temperature and universal thermal climate index (UTCI). R scripts are accompanied by batch scripts which can be applied to more efficiently and 'passively' download ERA5 data from the Copernicus Climate Data Store, aggregate 10+ input meteorological variables to WBGT and UTCI using the heatmetrics R package, and spatiotemporally aggregate the WBGT and UTCI to daily, county-level metrics for use in epidemiologic analyses. Comments throughout provide guidance on setting up required accounts, downloading additional data, and understanding potential pitfalls in the process.
