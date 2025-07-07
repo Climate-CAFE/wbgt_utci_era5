@@ -72,12 +72,20 @@ if (packageVersion("terra") < "1.7.78"   | packageVersion("sf") < "1.0.7" |
     packageVersion("doBy")  < "4.6.19"   | packageVersion("lwgeom") < "0.2.8") {
   cat("WARNING: packages are outdated and may result in errors.") }
 
+# Set region. This code is developed for US counties with the region representing
+# the four US regions in the contiguous US. These could be updated to reflect
+# any subdivision of your area of interest, as needed to divide processing into
+# more computationally efficient steps.
+#
+region_in <- 1
+
 ########################## User-Defined Parameters #############################
-# Set up directories to read in and output data
+# Set up directories to read in and output data. Having subfolders by region
+# can help to maintain organization 
 # 
-era_dir <- "RawData/ERA5_Hourly/"       # Should be where all ERA5-Land were downloaded
-era_25_dir <- "RawData/ERA5_25km/ERA5_Hourly/" # Should be where ERA5 (FDIR) was downloaded
-era_interdir <- "InterDir/"             # Where static urbanicity/lat/lon were output
+era_dir <- paste0("RawData/ERA5_Hourly/region", region_in, "/")        # Should be where all ERA5-Land were downloaded
+era_25_dir <- paste0("RawData/ERA5_25km/ERA5_Hourly/region", "/")# Should be where ERA5 (FDIR) was downloaded
+era_interdir <- paste0("InterDir/region", "/")   # Where static urbanicity/lat/lon were output
                                         # AND where ERA5 UTCI and WBGT outputs will be saved
 
 # Set years to process 
@@ -95,7 +103,7 @@ shapefile <- tigris::states(year = 2020)
 
 # Subset to the actual region of interest
 #
-shapefile <- shapefile[shapefile$REGION == 1, ]
+shapefile <- shapefile[shapefile$REGION == region_in, ]
 
 # Source functions from heatmetrics package:
 #
@@ -126,8 +134,7 @@ b <- as.numeric(args[1])
 # If you are processing a small area, or short time series, modifying the script
 # to run without required indexing may be useful. This can be done by removing 
 # these lines and separately noting the rasters which should be read in for
-# processing. A loop could be used with similar syntax, but would be very
-# time consuming.
+# processing
 
 # Set series of year_months to index files and bring in one month at a time 
 # for processing
@@ -375,7 +382,7 @@ for (date_in in c(dates_rast)) {
   era5_rast_ssr_W[[index_date[2:25]]] <- era5_rast_ssr_date2[[2:25]]
   era5_rast_strd_W[[index_date[2:25]]] <- era5_rast_strd_date2[[2:25]]
   era5_rast_str_W[[index_date[2:25]]] <- era5_rast_st_date2[[2:25]]
-
+  
 }
 
 # Remove first and last layer
@@ -561,7 +568,7 @@ utci <- era5_rast_t2m_C
 # Loop through to apply for all layers
 #
 for (i in c(1:nlyr(era5_rast_t2m_C))) {
- 
+  
   # Track progress 
   cat(i, "\n")
   
@@ -581,7 +588,7 @@ time(utci) <- time(era5_rast_t2m_C)
 
 # Save universal thermal climate index
 #
-writeRaster(utci, paste0(era_interdir, "utci_final_", year_month, ".tif"), overwrite = TRUE)
+writeRaster(utci, paste0(era_interdir, "utci_final_", year_month, "_", region_in, ".tif"), overwrite = TRUE)
 
 ######################## WBGT ################################################
 
@@ -598,7 +605,7 @@ era5_rast_pressure <- era5_rast_pressure / 100
 
 # Read in urbanicity, lat, and lon rasters (time invariant)
 #
-nlcd_urban <- rast(paste0(era_interdir, "nlcd_urbanicity.tif"))
+nlcd_urban <- rast(paste0(era_interdir, "nlcd_urbanicity_", region_in, ".tif"))
 era5_lat <- rast(paste0(era_interdir, "era5_lat_rast.tif"))
 era5_lon <- rast(paste0(era_interdir, "era5_lon_rast.tif"))
 
@@ -652,6 +659,7 @@ for (i in 1:nlyr(era5_rast_t2m)) {
   valid_idx <- which(!is.na(vals))
   
   # Stack all
+  #
   rstack <- c(era5_lat, 
               era5_lon, 
               era5_rast_ssrd_W[[i]], 
@@ -701,5 +709,4 @@ time(output_wbgt) <- time(era5_rast_t2m_C)
 
 # Save wet bulb globe
 #
-writeRaster(output_wbgt, paste0(era_interdir, "wbgt_final_", year_month, ".tif"), overwrite = TRUE)
-  
+writeRaster(output_wbgt, paste0(era_interdir, "wbgt_final_", year_month, "_", region_in, ".tif"), overwrite = TRUE)

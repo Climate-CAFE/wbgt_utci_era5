@@ -67,6 +67,13 @@ ecmw_dir <- "RawData/ERA5_Hourly" # Directory where rasters will be output to
 home_dir <- ""                    # Directory where API credential are stored
 trac_dir <- "Code/Track_R/"       # Directory where request syntax will be saved for download
 
+# Set region. This code is developed for US counties with the region representing
+# the four US regions in the contiguous US. These could be updated to reflect
+# any subdivision of your area of interest, as needed to divide processing into
+# more computationally efficient steps.
+#
+region_in <- 1
+
 # Read in key from file. 
 # NOTE: The file storing your API key should be encrypted!
 # These will need to be set as text files - api_key will have your CDS API
@@ -88,7 +95,7 @@ shapefile_cut <- tigris::states(year = 2020)
 
 # Subset to Northeast region
 #
-shapefile_cut <- shapefile_cut[shapefile_cut$REGION == 1, ]
+shapefile_cut <- shapefile_cut[shapefile_cut$REGION == region_in, ]
 
 # Set years to download
 #
@@ -176,7 +183,7 @@ for (yr in query_years) {
     # Initialize the nested list for the variable and year input
     #
     combined_request_list[[as.character(yearvar)]] <- list() 
-
+    
     # Track progress in nested loop
     #
     cat(yearvar, "\n")
@@ -201,7 +208,7 @@ for (yr in query_years) {
       # as they need to be formatted.
       #
       query_dates <- paste0(yr, "-", query_1, "/", yr, "-", query_2)
-
+      
       # The below is the formatted API request language. All of the inputs
       # specified below in proper formatting can be identified by forming a 
       # request using the Copernicus CDS point-and-click interface for data
@@ -231,7 +238,7 @@ for (yr in query_years) {
         data_format = "netcdf",
         download_format = "unarchived",
         area = c(input_bbox$ymax, input_bbox$xmin, input_bbox$ymin, input_bbox$xmax),
-        target = paste0("era5-9km-country-", yearvar, "_", query_1, "_", query_2,".nc")
+        target = paste0("era5-9km-country-", yearvar, "_", query_1, "_", query_2,"_", region_in, ".nc")
       )
       
       # Add request to nested batch list
@@ -306,7 +313,7 @@ for (year in c(minyear:maxyear)) {
     
     # Save text warnings to file
     #
-    writeLines(log_output, paste0(trac_dir, "console_test_", yearvar, "_var.txt"))
+    writeLines(log_output, paste0(trac_dir, "console_test_", yearvar, "_", region_in, "_var.txt"))
     
   }
 }
