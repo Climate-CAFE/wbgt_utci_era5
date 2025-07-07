@@ -41,6 +41,13 @@ era_interdir <- "InterDir/"           # Intermediate where static rasters output
 nlcd_dir <- "RawData/NLCD/"           # Where NLCD data is stored
 water_dir <- "RawData/JRC_PermWater/" # Where JRC Permanent water is stored
 
+# Set region. This code is developed for US counties with the region representing
+# the four US regions in the contiguous US. These could be updated to reflect
+# any subdivision of your area of interest, as needed to divide processing into
+# more computationally efficient steps.
+#
+region_in <- 1
+
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
 # downloaded using TIGRIS. If you are conducting a global analysis or have 
 # an existing shapefile, the below can be replaced to just set the shapefile_cut
@@ -51,7 +58,7 @@ shapefile <- tigris::states(year = 2020)
 
 # Subset to the actual region of interest
 #
-shapefile <- shapefile[shapefile$REGION == 1, ]
+shapefile <- shapefile[shapefile$REGION == region_in, ]
 
 ############# Read in Inputs ###################################################
 # Set up path for ERA5 files. The time invariant is only based on the resolution
@@ -129,7 +136,8 @@ nlcd_urban <- ifel(nlcd_res > 0.333, 1, 0)
 
 # Save study area urbanicity (this can be applied for all layers)
 #
-writeRaster(nlcd_urban, paste0(era_interdir, "nlcd_urbanicity.tif"), overwrite = TRUE)
+writeRaster(nlcd_urban, paste0(era_interdir, "nlcd_urbanicity_", region_in, ".tif"), overwrite = TRUE)
+
 
 ######################## Permanent Water #######################################
 # For county aggregation, we want to exclude grids that are >50% comprised of 

@@ -56,6 +56,13 @@ if (packageVersion("terra") < "1.5.34"   | packageVersion("sf") < "1.0.7" |
 era_dir <- "RawData/ERA5_Hourly/" # Where raw ERA5 rasters are stored
 points_dir <- "ERA5_Fishnet/"     # Where you will output grid/polygon merge
 
+# Set region. This code is developed for US counties with the region representing
+# the four US regions in the contiguous US. These could be updated to reflect
+# any subdivision of your area of interest, as needed to divide processing into
+# more computationally efficient steps.
+#
+region_in <- 1
+
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
 # downloaded using TIGRIS. If you are conducting a global analysis or have 
 # an existing shapefile, the below can be replaced to just set the input_shape
@@ -67,7 +74,7 @@ shapefile <- tigris::states(year = 2020)
 
 # Subset to the actual region of interest
 #
-shapefile <- shapefile[shapefile$REGION == 1, ]
+shapefile <- shapefile[shapefile$REGION == region_in, ]
 
 # Query counties in region - we first use the above to set the states we need,
 # then download the actual shape here
@@ -103,10 +110,10 @@ ymin <- era_extent[3]
 ymax <- era_extent[4]
 
 era_matrix <- matrix(c(xmin, ymax,
-                        xmax, ymax,
-                        xmax, ymin,
-                        xmin, ymin,
-                        xmin, ymax), byrow = TRUE, ncol = 2) %>%
+                       xmax, ymax,
+                       xmax, ymin,
+                       xmin, ymin,
+                       xmin, ymax), byrow = TRUE, ncol = 2) %>%
   list() %>% 
   st_polygon() %>% 
   st_sfc(., crs = st_crs(era_raster))
@@ -116,7 +123,7 @@ era_matrix <- matrix(c(xmin, ymax,
 era_rows <- dim(era_raster)[1]
 era_cols <- dim(era_raster)[2]
 era_fishnet <- st_make_grid(era_matrix, n = c(era_cols, era_rows), 
-                             crs = st_crs(era_raster), what = 'polygons') %>%
+                            crs = st_crs(era_raster), what = 'polygons') %>%
   st_sf('geometry' = ., data.frame('ID' = 1:length(.)))
 
 
@@ -267,5 +274,5 @@ extraction_pts$SpatWt <- extraction_pts$Area_m2 / extraction_pts$Area_m2.sumfun
 
 # Save extraction points
 #
-st_write(extraction_pts, paste0(points_dir, "era5_county_usreg1_extraction_pts.gpkg"),
+st_write(extraction_pts, paste0(points_dir, "era5_county_usreg", region_in, "_extraction_pts.gpkg"),
          append = FALSE)

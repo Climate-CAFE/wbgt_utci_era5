@@ -32,6 +32,13 @@ ecmw_dir <- "RawData/ERA5_25km/"        # Directory where rasters will be output
 home_dir <- ""                          # Directory where API credential are stored
 trac_dir <- "Code/Track_R/"             # Directory where request syntax will be saved for download
 
+# Set region. This code is developed for US counties with the region representing
+# the four US regions in the contiguous US. These could be updated to reflect
+# any subdivision of your area of interest, as needed to divide processing into
+# more computationally efficient steps.
+#
+region_in <- 1
+
 # Read in key from file. 
 # NOTE: The file storing your API key should be encrypted!
 #
@@ -67,7 +74,7 @@ for (year_in in c(minyear:maxyear)) {
   
   # Read in log output to extract text for complete jobs download
   #
-  api_out <- readLines(paste0(trac_dir, "console_era_25_", year_in,".txt"))
+  api_out <- readLines(paste0(trac_dir, "console_era_25_", year_in, "_", region_in, ".txt"))
   
   # Try to extract wf_transfer lines
   #
