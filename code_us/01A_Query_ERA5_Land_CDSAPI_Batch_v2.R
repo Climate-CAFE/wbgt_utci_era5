@@ -1,7 +1,7 @@
 # Created by: Zach Popp
 # Date Created: 04/01/2025
 # Version Number: v2
-# Date Modified: 04/29/2025
+# Date Modified: 07/08/2025
 # Modifications:
 #   Switched queue download to separate script
 #
@@ -13,6 +13,17 @@
 #     Please explore the vignettes provided and note the provided instructions
 #     for how to sign up for a Copernicus account and to access the relevant
 #     user and key inputs below required to query data.
+#
+##### Brief Overview of Account Creation: 
+##### 1. Create an ECMWF account by self-registering. Follow https://github.com/bluegreen-labs/ecmwfr?tab=readme-ov-file
+##### under section "Use: ECMWF Data Store services".
+##### 2. Visit user profile to get personal access token. Follow https://github.com/bluegreen-labs/ecmwfr?tab=readme-ov-file
+##### under section "Use: ECMWF Data Store services".
+##### 3. Visit user profile to accept the terms and conditions in the profile page. 
+##### 4. Go to ERA-5 land page following https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=overview 
+##### under section "Data Requests". Go to "Terms of use" block to accept the data licence to use products.
+##### 5. Visit user profile page again to double check that Dataset licences to use Copernicus products shows up there and 
+##### has been accepted. 
 #
 #     The Copernicus Climate Data Store API restricts the number of requests
 #     actively running at a given time. Requests will sit in a queue, which
@@ -74,7 +85,9 @@ trac_dir <- "Code/Track_R/"       # Directory where request syntax will be saved
 #
 region_in <- 1
 
-# Read in key from file. 
+# Read in key from file. See https://github.com/bluegreen-labs/ecmwfr for details
+# on accessing your key
+#
 # NOTE: The file storing your API key should be encrypted!
 # These will need to be set as text files - api_key will have your CDS API
 # and keyring will have a password that is otherwise set and then requested by
