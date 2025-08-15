@@ -54,7 +54,11 @@
 library("ecmwfr")
 library("sf")
 library("dplyr")
-library("keyring")
+library("keyring") # Note: the keyring package may not be accessible in your computing
+# environment. The package is used to provide a password that
+# is otherwise requested directly during an interactive R 
+# R Session. If the package cannot be used, this script can 
+# be run in your session and the password provided directly.
 library("tigris")
 
 # Check package version numbers
@@ -78,7 +82,7 @@ trac_dir <- "Code/Track_R/"                   # Directory where request syntax w
 region_in <- 1
 
 # Read in key from file. 
-# NOTE: The file storing your API key should be encrypted!
+# NOTE: The file storing your API key should never be shared publicly!
 # These will need to be set as text files - api_key will have your CDS API
 # and keyring will have a password that is otherwise set and then requested by
 # RStudio when attempting to unlock use of the CDS API. If not running in a

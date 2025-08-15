@@ -23,7 +23,11 @@
 # Load required packages
 #
 library("ecmwfr")
-library("keyring")
+library("keyring") # Note: the keyring package may not be accessible in your computing
+# environment. The package is used to provide a password that
+# is otherwise requested directly during an interactive R 
+# R Session. If the package cannot be used, this script can 
+# be run in your session and the password provided directly.
 
 ################### User-Define Parameters #####################################
 
@@ -42,7 +46,7 @@ trac_dir <- "Code/Track_R/" # Directory where request syntax will be saved for d
 region_in <- 1
 
 # Read in key from file. 
-# NOTE: The file storing your API key should be encrypted!
+# NOTE: The file storing your API key should never be shared publicly.
 #
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
 keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)

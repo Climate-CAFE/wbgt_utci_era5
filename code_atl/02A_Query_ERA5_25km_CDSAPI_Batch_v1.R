@@ -54,7 +54,11 @@
 library("ecmwfr")
 library("sf")
 library("dplyr")
-library("keyring")
+library("keyring") # Note: the keyring package may not be accessible in your computing
+# environment. The package is used to provide a password that
+# is otherwise requested directly during an interactive R 
+# R Session. If the package cannot be used, this script can 
+# be run in your session and the password provided directly.
 library("tigris")
 
 # Check package version numbers
@@ -78,14 +82,17 @@ trac_dir <- "0_codedir/trackdir/"       # Directory where request syntax will be
 #
 county_in <- 13121 # Example county is Fulton County, GA
 
-# NOTE: The file storing your API key should be encrypted!
+# NOTE: The file storing your API key should never be shared publicly!
 # These will need to be set as text files - api_key will have your CDS API
 # and keyring will have a password that is otherwise set and then requested by
 # RStudio when attempting to unlock use of the CDS API. If not running in a
 # batch script, these approaches may not be required.
 #
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
-keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
+
+# Set key (commented out as this is run without submitting in terminal)
+# 
+# keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
 
 # Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
@@ -107,6 +114,9 @@ minyear <- 2024
 maxyear <- 2024
 
 ################### Build Requests #############################################
+# Set key (commented out as this is run without submitting in terminal)
+# 
+# keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
 
 # Assess bounding box. The bounding box represents the coordinates of the 
 # extent of the shapefile, and will be used to specify the area we would like

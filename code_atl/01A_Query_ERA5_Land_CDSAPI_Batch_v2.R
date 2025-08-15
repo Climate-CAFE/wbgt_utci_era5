@@ -63,7 +63,11 @@
 library("ecmwfr")
 library("sf")
 library("dplyr")
-library("keyring")
+library("keyring") # Note: the keyring package may not be accessible in your computing
+                   # environment. The package is used to provide a password that
+                   # is otherwise requested directly during an interactive R 
+                   # R Session. If the package cannot be used, this script can 
+                   # be run in your session and the password provided directly.
 library("tigris")
 
 # Check package version numbers
@@ -97,7 +101,10 @@ county_in <- 13121 # Example county is Fulton County, GA
 # batch script, these approaches may not be required.
 #
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
-keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
+
+# Set key (commented out as this is run without submitting in terminal)
+# 
+# keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
 
 # Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
@@ -119,7 +126,7 @@ minyear <- 2024
 maxyear <- 2024
 
 ################### Build Requests #############################################
-# Set key
+# Set key (commented out as this is run without submitting in terminal)
 # 
 # keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
 
