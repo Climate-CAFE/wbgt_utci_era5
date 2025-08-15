@@ -1,11 +1,14 @@
 # Created by: Zach Popp
-# Date Created: 04/01/2025
-# Version Number: v2
-# Date Modified: 07/08/2025
+# Date Created: 05/06/2025
+# Version Number: v1
+# Date Modified: 
 # Modifications:
-#   Switched queue download to separate script
 #
 # Overview:
+#     Note: This script is essentially the same as script 1A but downloads just
+#     one varibale for the ERA 25km model that has total_sky_direct_solar_radiation_at_surface
+#     which is then downscaled and used in the WBGT and UTCI processing.
+#
 #     This code uses the ecmwfr R package to download ERA5 temperature measures
 #     from The Copernicus Climate Data Store. More details on the ERA5 API
 #     access using the ecmwfr R package are accessible at:
@@ -13,17 +16,6 @@
 #     Please explore the vignettes provided and note the provided instructions
 #     for how to sign up for a Copernicus account and to access the relevant
 #     user and key inputs below required to query data.
-#
-##### Brief Overview of Account Creation: 
-##### 1. Create an ECMWF account by self-registering. Follow https://github.com/bluegreen-labs/ecmwfr?tab=readme-ov-file
-##### under section "Use: ECMWF Data Store services".
-##### 2. Visit user profile to get personal access token. Follow https://github.com/bluegreen-labs/ecmwfr?tab=readme-ov-file
-##### under section "Use: ECMWF Data Store services".
-##### 3. Visit user profile to accept the terms and conditions in the profile page. 
-##### 4. Go to ERA-5 land page following https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=overview 
-##### under section "Data Requests". Go to "Terms of use" block to accept the data licence to use products.
-##### 5. Visit user profile page again to double check that Dataset licences to use Copernicus products shows up there and 
-##### has been accepted. 
 #
 #     The Copernicus Climate Data Store API restricts the number of requests
 #     actively running at a given time. Requests will sit in a queue, which
@@ -78,28 +70,29 @@ if (packageVersion("ecmwfr") < "1.5.0"   | packageVersion("sf") < "1.0.16" ) {
 # Set directory. Establishing this at the start of the script is useful in case
 # future adjustments are made to the path. 
 #
-ecmw_dir <- "RawData/ERA5_Hourly" # Directory where rasters will be output to
-home_dir <- ""                    # Directory where API credential are stored
-trac_dir <- "Code/Track_R/"       # Directory where request syntax will be saved for download
+setwd("C:/Users/zpopp/OneDrive - Boston University/Desktop/CAFE/ERA5_WBGT")
 
-# Set region. This code is developed for US counties with the region representing
-# the four US regions in the contiguous US. These could be updated to reflect
+ecmw_dir <- "RawData/ERA5_25km/" # Directory where rasters will be output to
+home_dir <- "0_codedir/keydir/"                    # Directory where API credential are stored
+trac_dir <- "0_codedir/trackdir/"       # Directory where request syntax will be saved for download
+
+# Set county This code is developed for a single US county. These could be updated to reflect
 # any subdivision of your area of interest, as needed to divide processing into
 # more computationally efficient steps.
 #
-region_in <- 1
+county_in <- 13121 # Example county is Fulton County, GA
 
-# Read in key from file. See https://github.com/bluegreen-labs/ecmwfr for details
-# on accessing your key
-#
-# NOTE: The file storing your API key should never be shared publicly.
+# NOTE: The file storing your API key should never be shared publicly!
 # These will need to be set as text files - api_key will have your CDS API
 # and keyring will have a password that is otherwise set and then requested by
 # RStudio when attempting to unlock use of the CDS API. If not running in a
 # batch script, these approaches may not be required.
 #
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
-keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
+
+# Set key (commented out as this is run without submitting in terminal)
+# 
+# keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
 
 # Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
@@ -108,21 +101,22 @@ keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet
 # input:
 #     shapefile_cut <- st_read("shapefile_path")
 #
-shapefile_cut <- tigris::states(year = 2020)
+shapefile_cut <- tigris::counties(year = 2020,
+                                  state = substr(county_in, 1, 2))
 
 # Subset to Northeast region
 #
-shapefile_cut <- shapefile_cut[shapefile_cut$REGION == region_in, ]
+shapefile_cut <- shapefile_cut[shapefile_cut$GEOID == county_in, ]
 
 # Set years to download
 #
-minyear <- 2000
+minyear <- 2024
 maxyear <- 2024
 
 ################### Build Requests #############################################
-# Set key
+# Set key (commented out as this is run without submitting in terminal)
 # 
-keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
+# keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
 
 # Assess bounding box. The bounding box represents the coordinates of the 
 # extent of the shapefile, and will be used to specify the area we would like
@@ -140,10 +134,16 @@ input_bbox <- st_bbox(shapefile_cut)
 # is applied because the resolution of netCDF ERA5 data is .25x.25
 # https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference
 #
-input_bbox$xmin <- round(input_bbox$xmin[[1]], digits = 1) - 0.1
-input_bbox$ymin <- round(input_bbox$ymin[[1]], digits = 1) - 0.1
-input_bbox$xmax <- round(input_bbox$xmax[[1]], digits = 1) + 0.1
-input_bbox$ymax <- round(input_bbox$ymax[[1]], digits = 1) + 0.1
+# To round to 0.25, use the below
+#
+round_to_025 <- function(x) {
+  round(x / 0.25) * 0.25
+}
+
+input_bbox$xmin <- round_to_025(input_bbox$xmin[[1]]) - 0.25
+input_bbox$ymin <- round_to_025(input_bbox$ymin[[1]]) - 0.25
+input_bbox$xmax <- round_to_025(input_bbox$xmax[[1]]) + 0.25
+input_bbox$ymax <- round_to_025(input_bbox$ymax[[1]]) + 0.25
 
 # The set of inputs below specify the range of years to request, and sets
 # the series of month state/end dates to query. There is 
@@ -163,15 +163,7 @@ query_ends <- c("01-31", "02-29", "03-31", "04-30", "05-31", "06-30", "07-31",
 
 # Set variables list
 #
-all_vars <- c("2m_temperature",
-              "2m_dewpoint_temperature",
-              "surface_net_solar_radiation",
-              "surface_net_thermal_radiation",
-              "surface_solar_radiation_downwards",
-              "surface_thermal_radiation_downwards",
-              "10m_u_component_of_wind",
-              "10m_v_component_of_wind",
-              "surface_pressure")
+all_vars <- c("total_sky_direct_solar_radiation_at_surface")
 
 # Initialize empty lists for each variable
 #
@@ -185,88 +177,76 @@ combined_request_list <- list()
 #
 for (yr in query_years) {
   
-  # Track progress in loop
+  # Set up list for year
   #
-  cat("Now processing year ", yr, "\n")
+  combined_request_list[[as.character(yr)]] <- list() 
   
-  # Loop through variables
+  # We have just one variable. 
+  # For each year-variable, a monthly request is setup. If a request is
+  # too large, it will not be accepted by the CDS servers, so this division
+  # of requests is useful and will expedite the process.
   #
-  for (var in c(all_vars)) {
+  for (i in 1:12) {
     
-    # Set up year - var index
+    # Track progress
     #
-    yearvar <- paste0(var, yr)
+    cat("Now processing quarter ", i, "\n")
     
-    # Initialize the nested list for the variable and year input
+    # Extract inputs for start and end based on list of dates at begin and 
+    # end of months around quarter
     #
-    combined_request_list[[as.character(yearvar)]] <- list() 
+    query_1 <- query_starts[i]
+    query_2 <- query_ends[i]
     
-    # Track progress in nested loop
+    # Establish query for date periods. This formats the date inputs
+    # as they need to be formatted.
     #
-    cat(yearvar, "\n")
+    query_dates <- paste0(yr, "-", query_1, "/", yr, "-", query_2)
     
-    # For each year-variable, a monthly request is setup. If a request is
-    # too large, it will not be accepted by the CDS servers, so this division
-    # of requests is useful and will expedite the process.
+    # Track progress
     #
-    for (i in 1:12) {
-      
-      # Track progress
-      #
-      cat("Now processing quarter ", i, "\n")
-      
-      # Extract inputs for start and end based on list of dates at begin and 
-      # end of months around quarter
-      #
-      query_1 <- query_starts[i]
-      query_2 <- query_ends[i]
-      
-      # Establish query for date periods. This formats the date inputs
-      # as they need to be formatted.
-      #
-      query_dates <- paste0(yr, "-", query_1, "/", yr, "-", query_2)
-      
-      # The below is the formatted API request language. All of the inputs
-      # specified below in proper formatting can be identified by forming a 
-      # request using the Copernicus CDS point-and-click interface for data
-      # requests. https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=form
-      # Select the variables, timing, and netcdf as the output format, and then 
-      # select "Show API Request" at the bottom of the screen. 
-      #
-      # Note that the target is the filename that will be exported to the path
-      # specified in the next part of the script. If using a loop, ensure that
-      # that the unique features of each request are noted in the output! Here
-      # we have each of the year, variable, and months (all our loop parameters)
-      # in the filename so we won't accidentally overwrite.
-      #
-      request_era <- list(
-        dataset_short_name = "reanalysis-era5-land",
-        product_type = "reanalysis",
-        variable = c(var),
-        date = query_dates,
-        time = c('00:00', '01:00', '02:00',
-                 '03:00', '04:00', '05:00',
-                 '06:00', '07:00', '08:00',
-                 '09:00', '10:00', '11:00',
-                 '12:00', '13:00', '14:00',
-                 '15:00', '16:00', '17:00',
-                 '18:00', '19:00', '20:00',
-                 '21:00', '22:00', '23:00'),
-        data_format = "netcdf",
-        download_format = "unarchived",
-        area = c(input_bbox$ymax, input_bbox$xmin, input_bbox$ymin, input_bbox$xmax),
-        target = paste0("era5-9km-country-", yearvar, "_", query_1, "_", query_2,"_", region_in, ".nc")
-      )
-      
-      # Add request to nested batch list
-      #
-      combined_request_list[[as.character(yearvar)]] <- c(combined_request_list[[as.character(yearvar)]], list(request_era))   
-      
-    }
+    cat("Now processing year ", yr, "\n")
+    
+    # The below is the formatted API request language. All of the inputs
+    # specified below in proper formatting can be identified by forming a 
+    # request using the Copernicus CDS point-and-click interface for data
+    # requests. https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=form
+    # Select the variables, timing, and netcdf as the output format, and then 
+    # select "Show API Request" at the bottom of the screen. 
+    #
+    # Note that the target is the filename that will be exported to the path
+    # specified in the next part of the script. If using a loop, ensure that
+    # that the unique features of each request are noted in the output! Here
+    # we have each of the year, variable, and months (all our loop parameters)
+    # in the filename so we won't accidentally overwrite.
+    #
+    request_era <- list(
+      dataset_short_name = "reanalysis-era5-single-levels",
+      product_type = "reanalysis",
+      variable = c(all_vars),
+      date = query_dates,
+      time = c('00:00', '01:00', '02:00',
+               '03:00', '04:00', '05:00',
+               '06:00', '07:00', '08:00',
+               '09:00', '10:00', '11:00',
+               '12:00', '13:00', '14:00',
+               '15:00', '16:00', '17:00',
+               '18:00', '19:00', '20:00',
+               '21:00', '22:00', '23:00'),
+      data_format = "netcdf",
+      download_format = "unarchived",
+      area = c(input_bbox$ymax, input_bbox$xmin, input_bbox$ymin, input_bbox$xmax),
+      target = paste0("era5-25km-country-",yr , "_", query_1, "_", query_2,"_", region_in, ".nc")
+    )
+    
+    # Add request to batch list
+    #
+    combined_request_list[[as.character(yr)]] <- c(combined_request_list[[as.character(yr)]], list(request_era))   
+    
   }
 }
 
-################### Submit Requests ############################################
+
 # If you run summary(combined_request_list), you will see that you now
 # should have a series of lists of length 12 (1 request for each monht)
 # and denoted by a variable name concatenated against a year
@@ -279,7 +259,7 @@ for (yr in query_years) {
 # including the download process will be inefficient as there will be a delay in 
 # adding requests to the queue while the download is pending. In order to get
 # around the download, we have a path set up here that does not exist: 
-#             path = paste0(ecmw_dir, "/x/")
+#             path = paste0(ecmw_dir, "/ERA5_Hourly/x/")
 # We add the /x/ so that the script will not download as the path does not
 # exist. We can then add the /x/ directory to the ERA5_Hourly directly before
 # running script 01C, so that the download is successful
@@ -287,53 +267,44 @@ for (yr in query_years) {
 # Loop through years to submit batch script
 #
 for (year in c(minyear:maxyear)) {
-  for (var in c(all_vars)) {
+  
+  # Set up text connection to track processing. This will save the warnings
+  # and output to a file on your device, which can then be read in to loop
+  # and download.
+  #
+  log_conn <- textConnection("log_output", "w", local = TRUE)
+  sink(log_conn, type = "output")
+  sink(log_conn, type = "message")
+  
+  # We run the submission within a tryCatch function as an error will be 
+  # generated by the fake file path. This will only come up after all
+  # requests are in
+  #
+  tryCatch(
     
-    # Form yearvar, which we need to index list. One request list should
-    # be submitted at a time
-    # 
-    yearvar <- paste0(var, year)
+    # Run the API request
+    batch_submit <- wf_request_batch(combined_request_list[[paste0(year)]], user = "ecmwfr", 
+                                     path = paste0(ecmw_dir, "/x/"), workers = 12, time_out = 100000)
     
-    # Set up text connection to track processing. This will save the warnings
-    # and output to a file on your device, which can then be read in to loop
-    # and download.
-    #
-    log_conn <- textConnection("log_output", "w", local = TRUE)
-    sink(log_conn, type = "output")
-    sink(log_conn, type = "message")
+    ,
     
-    # We run the submission within a tryCatch function as an error will be 
-    # generated by the fake file path. This will only come up after all
-    # requests are in
-    #
-    tryCatch(
-      
-      # Run the API request
-      batch_submit <- wf_request_batch(combined_request_list[[yearvar]], user = "ecmwfr", 
-                                       path = paste0(ecmw_dir, "/x/"), workers = 12, time_out = 100000)
-      
-      ,
-      
-      # If it fails, keep rolling
-      error = function(e) e
-    ) 
-    
-    # Stop capturing output to file
-    #
-    sink(NULL, type = "message")
-    sink(NULL, type = "output")
-    close(log_conn)
-    
-    # Update
-    #
-    cat(yearvar, " done \n")
-    
-    # Save text warnings to file
-    #
-    writeLines(log_output, paste0(trac_dir, "console_test_", yearvar, "_", region_in, "_var.txt"))
-    
-  }
+    # If it fails, keep rolling
+    error = function(e) e
+  ) 
+  
+  # Stop capturing output to file
+  #
+  sink(NULL, type = "message")
+  sink(NULL, type = "output")
+  close(log_conn)
+  
+  # Update
+  #
+  cat(year, " done \n")
+  
+  # Save text warnings to file
+  #
+  writeLines(log_output, paste0(trac_dir, "console_era_25_", year, "_", county_in, ".txt"))
+  
 }
-
-
 

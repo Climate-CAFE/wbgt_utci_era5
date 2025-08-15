@@ -1,9 +1,10 @@
 # Created by: Zach Popp
 # Date Created: 04/01/2025
 # Version Number: v2
-# Date Modified: 07/08/2025
+# Date Modified: 08/13/2025
 # Modifications:
 #   Switched queue download to separate script
+#   Set up to run for Atlanta alone to avoid batch need
 #
 # Overview:
 #     This code uses the ecmwfr R package to download ERA5 temperature measures
@@ -63,10 +64,10 @@ library("ecmwfr")
 library("sf")
 library("dplyr")
 library("keyring") # Note: the keyring package may not be accessible in your computing
-# environment. The package is used to provide a password that
-# is otherwise requested directly during an interactive R 
-# R Session. If the package cannot be used, this script can 
-# be run in your session and the password provided directly.
+                   # environment. The package is used to provide a password that
+                   # is otherwise requested directly during an interactive R 
+                   # R Session. If the package cannot be used, this script can 
+                   # be run in your session and the password provided directly.
 library("tigris")
 
 # Check package version numbers
@@ -78,16 +79,17 @@ if (packageVersion("ecmwfr") < "1.5.0"   | packageVersion("sf") < "1.0.16" ) {
 # Set directory. Establishing this at the start of the script is useful in case
 # future adjustments are made to the path. 
 #
-ecmw_dir <- "RawData/ERA5_Hourly" # Directory where rasters will be output to
-home_dir <- ""                    # Directory where API credential are stored
-trac_dir <- "Code/Track_R/"       # Directory where request syntax will be saved for download
+setwd("C:/Users/zpopp/OneDrive - Boston University/Desktop/CAFE/ERA5_WBGT")
 
-# Set region. This code is developed for US counties with the region representing
-# the four US regions in the contiguous US. These could be updated to reflect
+ecmw_dir <- "RawData/ERA5_Hourly/" # Directory where rasters will be output to
+home_dir <- "0_codedir/keydir/"                    # Directory where API credential are stored
+trac_dir <- "0_codedir/trackdir/"       # Directory where request syntax will be saved for download
+
+# Set county This code is developed for a single US county. These could be updated to reflect
 # any subdivision of your area of interest, as needed to divide processing into
 # more computationally efficient steps.
 #
-region_in <- 1
+county_in <- 13121 # Example county is Fulton County, GA
 
 # Read in key from file. See https://github.com/bluegreen-labs/ecmwfr for details
 # on accessing your key
@@ -99,7 +101,10 @@ region_in <- 1
 # batch script, these approaches may not be required.
 #
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
-keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
+
+# Set key (commented out as this is run without submitting in terminal)
+# 
+# keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
 
 # Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
@@ -108,21 +113,22 @@ keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet
 # input:
 #     shapefile_cut <- st_read("shapefile_path")
 #
-shapefile_cut <- tigris::states(year = 2020)
+shapefile_cut <- tigris::counties(year = 2020,
+                                  state = substr(county_in, 1, 2))
 
 # Subset to Northeast region
 #
-shapefile_cut <- shapefile_cut[shapefile_cut$REGION == region_in, ]
+shapefile_cut <- shapefile_cut[shapefile_cut$GEOID == county_in, ]
 
 # Set years to download
 #
-minyear <- 2000
+minyear <- 2024
 maxyear <- 2024
 
 ################### Build Requests #############################################
-# Set key
+# Set key (commented out as this is run without submitting in terminal)
 # 
-keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
+# keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
 
 # Assess bounding box. The bounding box represents the coordinates of the 
 # extent of the shapefile, and will be used to specify the area we would like
@@ -255,7 +261,7 @@ for (yr in query_years) {
         data_format = "netcdf",
         download_format = "unarchived",
         area = c(input_bbox$ymax, input_bbox$xmin, input_bbox$ymin, input_bbox$xmax),
-        target = paste0("era5-9km-country-", yearvar, "_", query_1, "_", query_2,"_", region_in, ".nc")
+        target = paste0("era5-9km-country-", yearvar, "_", query_1, "_", query_2,"_", county_in, ".nc")
       )
       
       # Add request to nested batch list
@@ -330,7 +336,7 @@ for (year in c(minyear:maxyear)) {
     
     # Save text warnings to file
     #
-    writeLines(log_output, paste0(trac_dir, "console_test_", yearvar, "_", region_in, "_var.txt"))
+    writeLines(log_output, paste0(trac_dir, "console_test_", yearvar, "_", county_in, "_var.txt"))
     
   }
 }
