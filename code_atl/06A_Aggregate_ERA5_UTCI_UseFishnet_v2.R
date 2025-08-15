@@ -59,18 +59,17 @@ if (packageVersion("terra") < "1.7.78"   | packageVersion("sf") < "1.0.7" |
 
 ################### User Defined Parameters ###################################
 
-# Set region. This code is developed for US counties with the region representing
-# the four US regions in the contiguous US. These could be updated to reflect
+# Set county This code is developed for a single US county. These could be updated to reflect
 # any subdivision of your area of interest, as needed to divide processing into
 # more computationally efficient steps.
 #
-region_in <- 1
+county_in <- 13121 # Example county is Fulton County, GA
 
 # Set up directories to read in and output data
 #
-era_interdir <- paste0("InterDir/region", region_in, "/") # Directory where WBGT and UTCI are output
-outdir <- paste0("OutputData/region", region_in, "/")     # Output directory for county-aggregated WBGT/UTCI
-points_dir <- "ERA5_Fishnet/" # Input directory for extraction points (5A)
+era_interdir <- paste0("InterDir/") # Directory where WBGT and UTCI are output
+outdir <- paste0("OutputData/")     # Output directory for county-aggregated WBGT/UTCI
+points_dir <- "InterDir/ERA5_Fishnet/" # Input directory for extraction points (5A)
 
 # Set name of geographic feature across which you want to summarize. This
 # should be a column in the extraction_pts datasets
@@ -79,7 +78,7 @@ agg_geo <- "GEOID"
 
 # Set year to process
 #
-years_to_agg <- c(2000:2024)
+years_to_agg <- c(2024:2024)
 
 ################### Run Processing to Daily Aggregate ##########################
 
@@ -90,7 +89,7 @@ sumfun <- function(x) { return(ifelse(all(is.na(x)), NA, sum(x, na.rm = TRUE))) 
 
 # Read in extraction points
 #
-extraction_pts <- vect(paste0(points_dir, "era5_county_usreg", region_in, "_extraction_pts.gpkg"))
+extraction_pts <- vect(paste0(points_dir, "era5_county_usreg", county_in, "_extraction_pts.gpkg"))
 
 # Time zone specification. 
 # The SpatRaster as downloaded from Copernicus will include hourly data based on
@@ -444,7 +443,7 @@ for (year in c(years_to_agg)) {
   
   # Output results by year to output directory
   #
-  saveRDS(finaloutput, paste0(outdir, "/", "county_agg_era5_", year, "_wbgt_utci_region", region_in, ".rds"))
+  saveRDS(finaloutput, paste0(outdir, "/", "county_agg_era5_", year, "_wbgt_utci_region", county_in, ".rds"))
   
 }
 

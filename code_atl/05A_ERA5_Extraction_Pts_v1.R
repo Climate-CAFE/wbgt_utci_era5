@@ -54,32 +54,27 @@ if (packageVersion("terra") < "1.5.34"   | packageVersion("sf") < "1.0.7" |
 # Set up directories to read in and output data
 # 
 era_dir <- "RawData/ERA5_Hourly/" # Where raw ERA5 rasters are stored
-points_dir <- "ERA5_Fishnet/"     # Where you will output grid/polygon merge
+points_dir <- "InterDir/ERA5_Fishnet/"     # Where you will output grid/polygon merge
 
-# Set region. This code is developed for US counties with the region representing
-# the four US regions in the contiguous US. These could be updated to reflect
+# Set county This code is developed for a single US county. These could be updated to reflect
 # any subdivision of your area of interest, as needed to divide processing into
 # more computationally efficient steps.
 #
-region_in <- 1
+county_in <- 13121 # Example county is Fulton County, GA
 
+# Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
 # downloaded using TIGRIS. If you are conducting a global analysis or have 
-# an existing shapefile, the below can be replaced to just set the input_shape
-# input (this script does not use the shapefile as before, it just uses US 
-# state names from that shapefle to download US counties)
-#     input_shape <- st_read("shapefile_path")
+# an existing shapefile, the below can be replaced to just set the shapefile_cut
+# input:
+#     shapefile_cut <- st_read("shapefile_path")
 #
-shapefile <- tigris::states(year = 2020)
+input_shape <- tigris::counties(year = 2020,
+                                  state = substr(county_in, 1, 2))
 
-# Subset to the actual region of interest
+# Subset to County for processing
 #
-shapefile <- shapefile[shapefile$REGION == region_in, ]
-
-# Query counties in region - we first use the above to set the states we need,
-# then download the actual shape here
-#
-input_shape <- tigris::counties(shapefile$STATEFP, year = 2020)
+input_shape <- input_shape[input_shape$GEOID == county_in, ]
 
 ####################### Develop Grid ###########################################
 
@@ -93,7 +88,7 @@ era_files <- paste0(era_dir, "/", era_files)
 
 # We just need one variable, as the grid is the same across the board
 #
-era_stack <- rast(era_files[grepl("2m_temperature2000_01", era_files)])
+era_stack <- rast(era_files[grepl("2m_temperature2024_01", era_files)])
 
 # %%%%%%%%%%%%%%%%%%%% CREATE A FISHNET GRID OF THE RASTER EXTENT %%%%%%%%%%%% #
 #
@@ -274,5 +269,5 @@ extraction_pts$SpatWt <- extraction_pts$Area_m2 / extraction_pts$Area_m2.sumfun
 
 # Save extraction points
 #
-st_write(extraction_pts, paste0(points_dir, "era5_county_usreg", region_in, "_extraction_pts.gpkg"),
+st_write(extraction_pts, paste0(points_dir, "era5_county_usreg", county_in, "_extraction_pts.gpkg"),
          append = FALSE)
