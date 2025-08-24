@@ -530,6 +530,11 @@ for (b in c(4:13)) {
   #
   relhum <- 100 * (e / e_s)
   
+  # Address unrealistic/impossible relative humidity values
+  #
+  relhum[relhum > 100 & relhum < 105] <- 100
+  relhum[relhum < 0 | relhum >= 105] <- NA
+  
   ######################## Wind Speed ###########################################
   
   # Get u speed and v speed
@@ -551,6 +556,10 @@ for (b in c(4:13)) {
   # Get windspeed
   #
   ws_init <- sqrt(u2v2)
+  
+  # Update wind speed under 0.5 to 0.5
+  #
+  ws_init[ws_init < 0.5] <- 0.5
   
   ######################## UTCI ##################################################
   

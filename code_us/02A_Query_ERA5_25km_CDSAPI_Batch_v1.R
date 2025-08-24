@@ -91,6 +91,11 @@ region_in <- 1
 api_key <- scan(paste0(home_dir, "api_key.txt"), what = "", nmax = 1, quiet = TRUE)
 keyring_pass <- scan(paste0(home_dir, "keyring.txt"), what = "", nmax = 1, quiet = TRUE)
 
+# If you are unable to set up the keyring password in your computing environment,
+# then you can set your api key directly in the script using wf_set_key(). 
+# Note that bash submission may not be effective with this approach, but the 
+# data download can be done directly in your R session. 
+
 # Identify extent for download.
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
 # downloaded using TIGRIS. If you are conducting a global analysis or have 
@@ -110,8 +115,8 @@ minyear <- 2000
 maxyear <- 2024
 
 ################### Build Requests #############################################
-
-# Set key
+# Set key. Note - remove this line if using wf_set_key to enter your api
+# key directly
 # 
 keyring_unlock(keyring = "ecmwfr", password = keyring_pass)
 

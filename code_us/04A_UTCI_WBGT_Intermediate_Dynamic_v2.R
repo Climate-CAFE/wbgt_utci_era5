@@ -86,12 +86,12 @@ region_in <- 1
 era_dir <- paste0("RawData/ERA5_Hourly/region", region_in, "/")        # Should be where all ERA5-Land were downloaded
 era_25_dir <- paste0("RawData/ERA5_25km/ERA5_Hourly/region", "/")# Should be where ERA5 (FDIR) was downloaded
 era_interdir <- paste0("InterDir/region", "/")   # Where static urbanicity/lat/lon were output
-                                        # AND where ERA5 UTCI and WBGT outputs will be saved
+# AND where ERA5 UTCI and WBGT outputs will be saved
 
 # Set years to process 
 #
 minyear <- 2000
-maxyear <- 2024
+maxyear <- 2025
 
 # LOAD Shapefile. This approach involves a US application for the Northeast US,
 # downloaded using TIGRIS. If you are conducting a global analysis or have 
@@ -519,6 +519,11 @@ e_s <- e_s / 1000
 #
 relhum <- 100 * (e / e_s)
 
+# Address unrealistic/impossible relative humidity values
+#
+relhum[relhum > 100 & relhum < 105] <- 100
+relhum[relhum < 0 | relhum >= 105] <- NA
+
 ######################## Wind Speed ###########################################
 
 # Get u speed and v speed
@@ -540,6 +545,10 @@ u2v2 <- u2+ v2
 # Get windspeed
 #
 ws_init <- sqrt(u2v2)
+
+# Update wind speed under 0.5 to 0.5
+#
+ws_init[ws_init < 0.5] <- 0.5
 
 ######################## UTCI ##################################################
 
