@@ -109,9 +109,9 @@ nlcd_crop <- crop(nlcd, extent_plus)
 
 # Apply restriction based on Keith paper
 #
-nlcd_crop_urb <- terra::ifel(nlcd_crop == 22 |
-                               nlcd_crop == 23 |
-                               nlcd_crop == 24, 1, 0)
+nlcd_crop_urb <- terra::ifel(nlcd_crop == "Developed, Low Intensity" |
+                               nlcd_crop == "Developed, Medium Intensity" |
+                               nlcd_crop == "Developed, High Intensity", 1, 0)
 
 # Summarize across ERA grid points
 #
