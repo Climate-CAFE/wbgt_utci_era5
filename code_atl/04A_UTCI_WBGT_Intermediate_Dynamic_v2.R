@@ -117,7 +117,6 @@ shapefile <- shapefile[shapefile$GEOID == county_in, ]
 
 for (b in c(4:13)) {
   
-  
   # Source functions from heatmetrics package:
   #
   # The package can be downloaded from figshare. Update the paths below to where
@@ -471,16 +470,24 @@ for (b in c(4:13)) {
   # used by Di Napoli (2020), https://doi.org/10.1007/s00484-020-01900-5"
   # Tmrt function
   #
-  # NOTE: ERROR WAS COMING THROUGH FROM Tmrt.R function - to correct I swapped
-  # the ifelse function for terra::if_el. It seems to have made the issue resolve.
-  # Mean radiant temperature takes in six different input rasters
+  # Vectorize the Tmrt function for application across rasters
   #
-  Tmrt_out <- Tmrt(era5_rast_ssrd_W, era5_rast_ssr_W, fdir_25km_resamp_W,
-                   era5_rast_strd_W, era5_rast_str_W, output_cza_int)
+  tmrtV <- function(SSRD, SSR, STRD, FDIR, STR, cza, DSRP = NULL, threshold = cza_threshold) {
+    return(Tmrt(SSRD, SSR, STRD, FDIR, STR, cza, DSRP = NULL, threshold = cza_threshold))
+  }
+  
+  # Initialize a cza_threshold (we will use NULL so the default of 0.1 is used)
+  #
+  cza_threshold <- NULL
+  
+  # Run functions
+  #
+  Tmrt_out <- lapp(sds(era5_rast_ssrd_W, era5_rast_ssr_W, era5_rast_strd_W, 
+                       fdir_25km_resamp_W, era5_rast_str_W, output_cza_int, DSRP = NULL, threshold = cza_threshold), fun = Vectorize(tmrtV))
   
   # Set time
   #
-  time(Tmrt_out) <- time(era5_rast_t2m)
+  terra::time(Tmrt_out) <- time(era5_rast_t2m)
   
   # We want to estimate the difference between radiant temperature and air temp
   # for UTCI. This is Tmrt minus ambient temp (t2m). 

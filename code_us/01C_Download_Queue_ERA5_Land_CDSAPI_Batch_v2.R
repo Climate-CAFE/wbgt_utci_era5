@@ -20,6 +20,12 @@
 #     Once all jobs are complete (or in the interim when some subset are 
 #     complete), this will download programmatically all files
 #
+#     NOTE: If you used the loop to write files directly to your environment, 
+#     then this script is likely not needed! This is only applicable if you 
+#     have requests that have been completed based on the CDS jobs queue but
+#     which have not downloaded to your environment. This will download those
+#     files.
+#
 # Load required packages
 #
 library("ecmwfr")
@@ -117,7 +123,9 @@ for (year_in in c(minyear:maxyear)) {
       n_start <- 1 + i*5
       n_end <- n_start + 3
       
-      # Cut to request, clean and run!
+      # Cut to request, clean and run! We have the /x/ here because this 
+      # script is typically used where you have created a 'dummy' directory
+      # to expedite the download process.
       #
       transfer_lang <- paste(unlist(api_trans[n_start:n_end]), collapse = "")
       transfer_lang <- paste(transfer_lang, ")")

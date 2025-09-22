@@ -81,9 +81,11 @@ trac_dir <- "Code/Track_R/"                   # Directory where request syntax w
 #
 region_in <- 1
 
-# Read in key from file. 
-# NOTE: The file storing your API key should never be shared publicly!
-# These will need to be set as text files - api_key will have your CDS API
+# Read in key from file. See https://github.com/bluegreen-labs/ecmwfr for details
+# on accessing your key
+#
+# NOTE: The file storing your API key should never be shared publicly.
+# In this script we store the API key in a text file.  api_key will have your CDS API
 # and keyring will have a password that is otherwise set and then requested by
 # RStudio when attempting to unlock use of the CDS API. If not running in a
 # batch script, these approaches may not be required.
@@ -249,22 +251,28 @@ for (yr in query_years) {
 }
 
 
+################### Submit Requests ############################################
 # If you run summary(combined_request_list), you will see that you now
 # should have a series of lists of length 12 (1 request for each monht)
 # and denoted by a variable name concatenated against a year
 # The loop below will pass each list to the wf_request_batch function.
 # 
-# Within the loop we use 'sink' to ensure all warnings and output are written
-# to a text file. These text files will include text that can be uses to reference
-# submitted and completed jobs, so that we can programmatically download the data.
-# This loop could be used to directly download, but in testing it seems that
-# including the download process will be inefficient as there will be a delay in 
-# adding requests to the queue while the download is pending. In order to get
-# around the download, we have a path set up here that does not exist: 
-#             path = paste0(ecmw_dir, "/ERA5_Hourly/x/")
-# We add the /x/ so that the script will not download as the path does not
-# exist. We can then add the /x/ directory to the ERA5_Hourly directly before
-# running script 01C, so that the download is successful
+# The loop below should directly download to your directory, but the text with
+# request tracking parameters should still be written to a file as a failsafe.
+# Using this loop for direct download can add to the download time as jobs will
+# not be added to the queue during the process of files being written to your
+# environment. To avoid this delay, you can specify in the path statement a
+# directory that does not exist as below:
+#
+#     wf_request_batch(combined_request_list[[year]], user = "ecmwfr", 
+#        path = paste0(ecmw_dir, "/x/"), workers = 12, time_out = 100000)
+#
+# Adding the /x/ will lead to files failing to be written to your specified 
+# environment, but the batch request will continue adding jobs to the queue. 
+# We can then add the /x/ directory to the ERA5_Hourly directly before
+# running script 02C, so that the download is successful. If you download
+# files directly with this loop, script 01C can likely be ignored, just confirm
+# that all data is present in your directory.
 #
 # Loop through years to submit batch script
 #
@@ -290,7 +298,9 @@ for (year in c(minyear:maxyear)) {
     
     ,
     
-    # If it fails, keep rolling
+    # If there is an error due to a file not being written to your environment,
+    # we want the loop to keep going as the file can be recovered using script
+    # 2C
     error = function(e) e
   ) 
   
